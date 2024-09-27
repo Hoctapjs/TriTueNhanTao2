@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSP - Ứng dụng Greedy TSP</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tìm kiếm đường đi ngắn nhất</h1>
+    <form id="tspForm">
+        <label for="start_city">Chọn thành phố khởi đầu:</label>
+        <input type="text" id="start_city" name="start_city" required>
+        <button type="submit">Tính toán</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        $(document).ready(function() {
+            $('#tspForm').on('submit', function(event) {
+                event.preventDefault();
+                const startCity = $('#start_city').val();
+
+                $.ajax({
+                    url: '/tsp',
+                    type: 'POST',
+                    data: { start_city: startCity },
+                    success: function(response) {
+                        if (response.error) {
+                            $('#result').html(`<p style="color: red;">${response.error}</p>`);
+                        } else {
+                            let resultHTML = `<h3>Đường đi:</h3><p>${response.path.join(' -> ')}</p>`;
+                            resultHTML += `<h3>Tổng khoảng cách:</h3><p>${response.total_distance} km</p>`;
+                            resultHTML += `<h3>Tọa độ các thành phố:</h3><ul>`;
+                            response.coordinates.forEach(coord => {
+                                resultHTML += `<li>${coord.x}, ${coord.y}</li>`;
+                            });
+                            resultHTML += `</ul>`;
+                            $('#result').html(resultHTML);
+                        }
+                    },
+                    error: function() {
+                        $('#result').html('<p style="color: red;">Có lỗi xảy ra!</p>');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

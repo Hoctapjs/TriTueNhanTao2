@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Thuật Toán GTS</title>
+</head>
+
+<body>
+    <h1>Tính Toán Đường Đi Với Thuật Toán GTS</h1>
+    <form id="tsp-form">
+        <label for="start_city">Nhập Thành Phố Bắt Đầu:</label>
+        <input type="text" id="start_city" name="start_city" required>
+        <button type="submit">Tính Toán</button>
+    </form>
+    <div id="result"></div>
+    <canvas id="tsp-canvas" width="2000" height="2000" style="border:1px solid #000;"></canvas>
+
+    <script>
+        document.getElementById('tsp-form').addEventListener('submit', function (event) {
+            event.preventDefault(); // Ngăn không cho form gửi thông thường
+
+            const startCity = document.getElementById('start_city').value;
+
+            fetch('/tsp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'start_city': startCity
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('result').innerText = data.error;
+                    } else {
+                        document.getElementById('result').innerText =
+                            `Tổng khoảng cách: ${data.total_distance}`;
+
+                        drawPath(data.path);
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('result').innerText = 'Đã xảy ra lỗi!';
+                });
+        });
+
+        function drawPath(path) {
+            const canvas = document.getElementById('tsp-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Tọa độ của các thành phố
+            const cityCoordinates = {
+                "An Giang": { x: 200, y: 300 },
+                "Bạc Liêu": { x: 300, y: 450 },
+                "Bến Tre": { x: 280, y: 360 },
+                "Cà Mau": { x: 350, y: 500 },
+                "Đồng Tháp": { x: 220, y: 250 },
+                "Hậu Giang": { x: 230, y: 270 },
+                "Kiên Giang": { x: 320, y: 390 },
+                "Long An": { x: 150, y: 370 },
+                "Sóc Trăng": { x: 250, y: 400 },
+                "Tiền Giang": { x: 220, y: 330 },
+                "Trà Vinh": { x: 240, y: 320 },
+                "Vĩnh Long": { x: 190, y: 300 }
+            };
+
+            const scaleFactor = 3; // Kích thước đường vẽ
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Xóa canvas trước khi vẽ lại
+
+            // Vẽ các thành phố
+            for (const city in cityCoordinates) {
+                const coord = cityCoordinates[city];
+                ctx.beginPath();
+                ctx.arc(coord.x * scaleFactor, coord.y * scaleFactor, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = 'red';
+                ctx.fill();
+
+                // Đặt kích thước chữ cho tên thành phố
+                ctx.font = '20px Arial'; // Đặt kích thước chữ
+                ctx.fillText(city, coord.x * scaleFactor + 10, coord.y * scaleFactor); // Hiển thị tên thành phố
+            }
+
+            // Vẽ đường nối và hiển thị khoảng cách
+            for (let i = 0; i < path.length - 1; i++) {
+                const currentCity = path[i];
+                const nextCity = path[i + 1];
+                const currentCoord = cityCoordinates[currentCity];
+                const nextCoord = cityCoordinates[nextCity];
+
+                // Tính toán khoảng cách và vẽ đường nối
+                const distance = calculateDistance(currentCity, nextCity);
+                const midX = (currentCoord.x + nextCoord.x) / 2 * scaleFactor;
+                const midY = (currentCoord.y + nextCoord.y) / 2 * scaleFactor;
+
+                // Vẽ đường nối
+                ctx.moveTo(currentCoord.x * scaleFactor, currentCoord.y * scaleFactor);
+                ctx.lineTo(nextCoord.x * scaleFactor, nextCoord.y * scaleFactor);
+                ctx.stroke();
+
+                // Đặt kích thước chữ cho khoảng cách
+                ctx.font = '20px Arial'; // Đặt kích thước chữ
+                // Hiển thị khoảng cách
+                ctx.fillText(distance.toFixed(2), midX, midY - 5); // Hiển thị khoảng cách lên trên đường nối
+            }
+        }
+
+        const distances = {
+            "An Giang": { "Bạc Liêu": 150, "Bến Tre": 120, "Cà Mau": 180, "Đồng Tháp": 80, "Hậu Giang": 60, "Kiên Giang": 110, "Long An": 140, "Sóc Trăng": 90, "Tiền Giang": 160, "Trà Vinh": 200, "Vĩnh Long": 170 },
+            "Bạc Liêu": { "An Giang": 150, "Bến Tre": 100, "Cà Mau": 70, "Đồng Tháp": 140, "Hậu Giang": 120, "Kiên Giang": 90, "Long An": 180, "Sóc Trăng": 60, "Tiền Giang": 160, "Trà Vinh": 150, "Vĩnh Long": 130 },
+            "Bến Tre": { "An Giang": 120, "Bạc Liêu": 100, "Cà Mau": 190, "Đồng Tháp": 110, "Hậu Giang": 130, "Kiên Giang": 160, "Long An": 90, "Sóc Trăng": 80, "Tiền Giang": 60, "Trà Vinh": 70, "Vĩnh Long": 50 },
+            "Cà Mau": { "An Giang": 180, "Bạc Liêu": 70, "Bến Tre": 190, "Đồng Tháp": 160, "Hậu Giang": 120, "Kiên Giang": 150, "Long An": 210, "Sóc Trăng": 90, "Tiền Giang": 250, "Trà Vinh": 230, "Vĩnh Long": 220 },
+            "Đồng Tháp": { "An Giang": 80, "Bạc Liêu": 140, "Bến Tre": 110, "Cà Mau": 160, "Hậu Giang": 50, "Kiên Giang": 120, "Long An": 90, "Sóc Trăng": 70, "Tiền Giang": 140, "Trà Vinh": 110, "Vĩnh Long": 100 },
+            "Hậu Giang": { "An Giang": 60, "Bạc Liêu": 120, "Bến Tre": 130, "Cà Mau": 120, "Đồng Tháp": 50, "Kiên Giang": 80, "Long An": 150, "Sóc Trăng": 40, "Tiền Giang": 160, "Trà Vinh": 130, "Vĩnh Long": 110 },
+            "Kiên Giang": { "An Giang": 110, "Bạc Liêu": 90, "Bến Tre": 160, "Cà Mau": 150, "Đồng Tháp": 120, "Hậu Giang": 80, "Long An": 190, "Sóc Trăng": 70, "Tiền Giang": 140, "Trà Vinh": 180, "Vĩnh Long": 170 },
+            "Long An": { "An Giang": 140, "Bạc Liêu": 180, "Bến Tre": 90, "Cà Mau": 210, "Đồng Tháp": 90, "Hậu Giang": 150, "Kiên Giang": 190, "Sóc Trăng": 130, "Tiền Giang": 60, "Trà Vinh": 70, "Vĩnh Long": 80 },
+            "Sóc Trăng": { "An Giang": 90, "Bạc Liêu": 60, "Bến Tre": 80, "Cà Mau": 90, "Đồng Tháp": 70, "Hậu Giang": 40, "Kiên Giang": 70, "Long An": 130, "Tiền Giang": 100, "Trà Vinh": 90, "Vĩnh Long": 80 },
+            "Tiền Giang": { "An Giang": 160, "Bạc Liêu": 160, "Bến Tre": 60, "Cà Mau": 250, "Đồng Tháp": 140, "Hậu Giang": 160, "Kiên Giang": 140, "Long An": 60, "Sóc Trăng": 100, "Trà Vinh": 150, "Vĩnh Long": 110 },
+            "Trà Vinh": { "An Giang": 200, "Bạc Liêu": 150, "Bến Tre": 70, "Cà Mau": 230, "Đồng Tháp": 110, "Hậu Giang": 130, "Kiên Giang": 180, "Long An": 70, "Sóc Trăng": 90, "Tiền Giang": 150, "Vĩnh Long": 120 },
+            "Vĩnh Long": { "An Giang": 170, "Bạc Liêu": 130, "Bến Tre": 50, "Cà Mau": 220, "Đồng Tháp": 100, "Hậu Giang": 110, "Kiên Giang": 170, "Long An": 80, "Sóc Trăng": 80, "Tiền Giang": 110, "Trà Vinh": 120 }
+        };
+
+        // Hàm tính khoảng cách thực tế giữa hai thành phố
+        function calculateDistance(city1, city2) {
+            // Kiểm tra xem city1 và city2 có tồn tại trong đối tượng distances không
+            if (distances[city1] && distances[city1][city2] !== undefined) {
+                return distances[city1][city2]; // Trả về khoảng cách thực tế
+            }
+            return 0; // Nếu không tìm thấy, trả về 0
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Khoảng cách giữa các thành phố</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            position: relative;
+        }
+        .city-name {
+            position: absolute;
+            color: red; /* Màu chữ đỏ */
+            font-size: 20px;
+            z-index: 20; /* Đặt z-index cao hơn để nằm trên các cạnh */
+        }
+        .distance-label {
+            position: absolute;
+            font-size: 16px; /* Kích thước chữ cho khoảng cách */
+            color: black; /* Màu chữ đen cho khoảng cách */
+            z-index: 10; /* Đặt z-index cao hơn để nằm trên các cạnh */
+        }
+    </style>
+</head>
+<body>
+    <h1>Khoảng cách giữa các thành phố</h1>
+    <canvas id="cityCanvas" width="1520" height="1300"></canvas> <!-- Tăng kích thước canvas -->
+    <script>
+        const cityCoordinates = {
+            "An Giang": { lat: 10.4106, lon: 105.0951 },
+            "Bạc Liêu": { lat: 9.2905, lon: 105.7270 },
+            "Bến Tre": { lat: 10.2500, lon: 106.3750 },
+            "Cà Mau": { lat: 9.1753, lon: 105.1459 },
+            "Đồng Tháp": { lat: 10.2905, lon: 105.6394 },
+            "Hậu Giang": { lat: 9.7594, lon: 105.9737 },
+            "Kiên Giang": { lat: 10.2844, lon: 104.9359 },
+            "Long An": { lat: 10.5333, lon: 106.4667 },
+            "Sóc Trăng": { lat: 9.5943, lon: 105.9742 },
+            "Tiền Giang": { lat: 10.3667, lon: 106.3667 },
+            "Trà Vinh": { lat: 9.9213, lon: 106.3671 },
+            "Vĩnh Long": { lat: 10.2532, lon: 105.9494 }
+        };
+
+        // Hàm tính khoảng cách giữa hai thành phố dựa trên kinh độ và vĩ độ
+        function calculateDistance(city1, city2) {
+            const R = 6371; // Bán kính trái đất tính bằng km
+            const lat1 = cityCoordinates[city1].lat * (Math.PI / 180);
+            const lon1 = cityCoordinates[city1].lon * (Math.PI / 180);
+            const lat2 = cityCoordinates[city2].lat * (Math.PI / 180);
+            const lon2 = cityCoordinates[city2].lon * (Math.PI / 180);
+
+            const dlat = lat2 - lat1;
+            const dlon = lon2 - lon1;
+
+            const a = Math.sin(dlat / 2) ** 2 +
+                      Math.cos(lat1) * Math.cos(lat2) *
+                      Math.sin(dlon / 2) ** 2;
+
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            return Math.round(R * c); // Làm tròn khoảng cách về số nguyên
+        }
+
+        // Vẽ thành phố và khoảng cách lên canvas
+        const canvas = document.getElementById("cityCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Kích thước và tỷ lệ để phóng to
+        const scale = 800; // Tỷ lệ phóng to
+
+        // Dịch các điểm xuống dưới 100
+        const offsetY = 100; // Dịch xuống 100
+        const offsetX = 130; // Dịch trái 200
+
+
+        for (const city in cityCoordinates) {
+            const { lat, lon } = cityCoordinates[city];
+            const x = (lon - 104.5) * scale - offsetX; // Chuyển đổi tọa độ để vẽ
+            const y = (10.5 - lat) * scale + offsetY;  // Chuyển đổi tọa độ để vẽ và dịch xuống
+
+            ctx.fillStyle = "blue";
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, Math.PI * 2); // Tăng kích thước chấm thành phố
+            ctx.fill();
+
+            // Tạo một phần tử để hiển thị tên thành phố
+            const cityName = document.createElement("div");
+            cityName.innerText = city;
+            cityName.className = "city-name"; // Thêm class để áp dụng CSS
+            cityName.style.left = `${x + 10}px`; // Đặt vị trí x
+            cityName.style.top = `${y + 30}px`; // Đặt vị trí y
+            document.body.appendChild(cityName);
+        }
+
+        // Vẽ khoảng cách giữa các thành phố
+        for (const city1 in cityCoordinates) {
+            for (const city2 in cityCoordinates) {
+                if (city1 !== city2) {
+                    const distance = calculateDistance(city1, city2);
+                    const coord1 = cityCoordinates[city1];
+                    const coord2 = cityCoordinates[city2];
+
+                    // Chuyển đổi tọa độ để vẽ và dịch xuống
+                    const x1 = (coord1.lon - 104.5) * scale - offsetX;
+                    const y1 = (10.5 - coord1.lat) * scale + offsetY;
+                    const x2 = (coord2.lon - 104.5) * scale - offsetX;
+                    const y2 = (10.5 - coord2.lat) * scale + offsetY;
+
+                    // Vẽ đường nối giữa hai thành phố
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+
+                    // Hiển thị khoảng cách
+                    const midX = (x1 + x2) / 2;
+                    const midY = (y1 + y2) / 2;
+
+                    // Tạo một phần tử để hiển thị khoảng cách
+                    const distanceLabel = document.createElement("div");
+                    distanceLabel.innerText = `${distance} km`;
+                    distanceLabel.className = "distance-label"; // Thêm class để áp dụng CSS
+                    distanceLabel.style.left = `${midX/*  - offsetX */}px`; // Đặt vị trí x
+                    distanceLabel.style.top = `${midY + offsetY-20}px`; // Đặt vị trí y
+                    document.body.appendChild(distanceLabel);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

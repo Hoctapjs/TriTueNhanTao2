@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Khoảng cách giữa các thành phố</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            position: relative;
+        }
+
+        .city-name {
+            position: absolute;
+            color: red;
+            /* Màu chữ đỏ */
+            font-size: 20px;
+            z-index: 20;
+            /* Đặt z-index cao hơn để nằm trên các cạnh */
+        }
+
+        .distance-label {
+            position: absolute;
+            font-size: 16px;
+            /* Kích thước chữ cho khoảng cách */
+            color: black;
+            /* Màu chữ đen cho khoảng cách */
+            z-index: 10;
+            /* Đặt z-index cao hơn để nằm trên các cạnh */
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Khoảng cách giữa các thành phố</h1>
+    <label for="start_city">Chọn thành phố bắt đầu:</label>
+    <select id="start_city">
+        <option value="">-- Chọn thành phố --</option>
+        <option value="An Giang">An Giang</option>
+        <option value="Bạc Liêu">Bạc Liêu</option>
+        <option value="Bến Tre">Bến Tre</option>
+        <option value="Cà Mau">Cà Mau</option>
+        <option value="Đồng Tháp">Đồng Tháp</option>
+        <option value="Hậu Giang">Hậu Giang</option>
+        <option value="Kiên Giang">Kiên Giang</option>
+        <option value="Long An">Long An</option>
+        <option value="Sóc Trăng">Sóc Trăng</option>
+        <option value="Tiền Giang">Tiền Giang</option>
+        <option value="Trà Vinh">Trà Vinh</option>
+        <option value="Vĩnh Long">Vĩnh Long</option>
+    </select>
+    <button id="calculateButton">Tính toán đường đi</button>
+
+    <canvas id="cityCanvas" width="1520" height="1300"></canvas> <!-- Tăng kích thước canvas -->
+    <h4 id="routeDescription"></h4> <!-- Thêm thẻ h4 để mô tả đường đi -->
+
+    <script>
+        const cityCoordinates = {
+            "An Giang": { lat: 10.4106, lon: 105.0951 },
+            "Bạc Liêu": { lat: 9.2905, lon: 105.7270 },
+            "Bến Tre": { lat: 10.2500, lon: 106.3750 },
+            "Cà Mau": { lat: 9.1753, lon: 105.1459 },
+            "Đồng Tháp": { lat: 10.2905, lon: 105.6394 },
+            "Hậu Giang": { lat: 9.7594, lon: 105.9737 },
+            "Kiên Giang": { lat: 10.2844, lon: 104.9359 },
+            "Long An": { lat: 10.5333, lon: 106.4667 },
+            "Sóc Trăng": { lat: 9.5943, lon: 105.9742 },
+            "Tiền Giang": { lat: 10.3667, lon: 106.3667 },
+            "Trà Vinh": { lat: 9.9213, lon: 106.3671 },
+            "Vĩnh Long": { lat: 10.2532, lon: 105.9494 }
+        };
+
+        const canvas = document.getElementById("cityCanvas");
+        const ctx = canvas.getContext("2d");
+
+        function drawCities() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (const city in cityCoordinates) {
+                const { lat, lon } = cityCoordinates[city];
+                const x = (lon - 104.5) * 800 - 130 - 50;
+                const y = (10.5 - lat) * 800 + 100;
+
+                ctx.fillStyle = "blue";
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                const cityName = document.createElement("div");
+                cityName.innerText = city;
+                cityName.className = "city-name";
+                cityName.style.left = `${x + 20}px`;
+                cityName.style.top = `${y + 30 + 60}px`;
+                document.body.appendChild(cityName);
+            }
+        }
+
+        function drawPath(path) {
+            ctx.strokeStyle = "green"; // Màu đường đi
+            ctx.lineWidth = 2; // Độ dày của đường đi
+            ctx.beginPath();
+            for (let i = 0; i < path.length; i++) {
+                const { lat, lon } = cityCoordinates[path[i]];
+                const x = (lon - 104.5) * 800 - 130 - 50;
+                const y = (10.5 - lat) * 800 + 100;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        document.getElementById('calculateButton').addEventListener('click', async () => {
+            const startCity = document.getElementById('start_city').value;
+            if (!startCity) {
+                alert("Vui lòng chọn thành phố bắt đầu!");
+                return;
+            }
+
+            const response = await fetch('/tsp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ start_city: startCity })
+            });
+
+            const result = await response.json();
+            if (result.error) {
+                alert(result.error);
+            } else {
+                drawPath(result.path);
+                alert(`Đường đi: ${result.path.join(' -> ')}\nTổng khoảng cách: ${result.total_distance} km`);
+                routeDescription.innerText = `Đường đi: ${result.path.join(' -> ')} | Tổng khoảng cách: ${result.total_distance} km`;
+
+            }
+        });
+
+        drawCities(); // Vẽ các thành phố lên canvas
+    </script>
+</body>
+
+</html>

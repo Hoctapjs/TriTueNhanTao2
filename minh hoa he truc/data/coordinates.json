@@ -1,0 +1,14 @@
+{
+    "An Giang": {"latitude": 10.521583, "longitude": 105.125896},
+    "Bạc Liêu": {"latitude": 9.293274, "longitude": 105.727806},
+    "Bến Tre": {"latitude": 10.241471, "longitude": 106.375344},
+    "Cà Mau": {"latitude": 9.176478, "longitude": 105.152420},
+    "Đồng Tháp": {"latitude": 10.535732, "longitude": 105.632347},
+    "Hậu Giang": {"latitude": 9.784020, "longitude": 105.470094},
+    "Kiên Giang": {"latitude": 10.015889, "longitude": 105.080133},
+    "Long An": {"latitude": 10.535800, "longitude": 106.413894},
+    "Sóc Trăng": {"latitude": 9.603703, "longitude": 105.980545},
+    "Tiền Giang": {"latitude": 10.449332, "longitude": 106.342003},
+    "Trà Vinh": {"latitude": 9.934732, "longitude": 106.354553},
+    "Vĩnh Long": {"latitude": 10.239711, "longitude": 105.957192}
+}
