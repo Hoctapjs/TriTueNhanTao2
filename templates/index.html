@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greedy Traveling Salesman</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Greedy Traveling Salesman</h1>
+    <form id="route-form">
+        <label for="start_city">Chọn thành phố xuất phát:</label>
+        <select id="start_city" name="start_city">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+        </select>
+        <button type="submit">Tính toán lộ trình</button>
+    </form>
+
+    <div id="result" style="margin-top: 20px;">
+        <h3>Kết quả:</h3>
+        <p>Lộ trình: <span id="route"></span></p>
+        <p>Khoảng cách tổng: <span id="distance"></span> km</p>
+    </div>
+
+    <script>
+        $('#route-form').on('submit', function(e) {
+            e.preventDefault();
+            var startCity = $('#start_city').val();
+
+            $.ajax({
+                url: '/calculate_route',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ start_city: startCity }),
+                success: function(response) {
+                    $('#route').text(response.route.join(' -> '));
+                    $('#distance').text(response.total_distance);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
