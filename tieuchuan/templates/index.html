@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thuật Toán GTS</title>
+</head>
+<body>
+    <h1>Tính Toán Đường Đi Với Thuật Toán GTS</h1>
+    <form id="tsp-form">
+        <label for="start_city">Nhập Thành Phố Bắt Đầu:</label>
+        <input type="text" id="start_city" name="start_city" required>
+        <button type="submit">Tính Toán</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('tsp-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Ngăn không cho form gửi thông thường
+
+            const startCity = document.getElementById('start_city').value;
+
+            fetch('/tsp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'start_city': startCity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('result').innerText = data.error;
+                } else {
+                    document.getElementById('result').innerText = 
+                        `Đường đi: ${data.path.join(' -> ')}\nTổng khoảng cách: ${data.total_distance}`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('result').innerText = 'Đã xảy ra lỗi!';
+            });
+        });
+    </script>
+</body>
+</html>
